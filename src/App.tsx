@@ -10,8 +10,6 @@ import {
   Search, 
   Menu, 
   X, 
-  Moon, 
-  Sun, 
   Save, 
   Clock, 
   ChevronLeft,
@@ -59,13 +57,6 @@ export default function App() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark' || 
-        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    }
-    return false;
-  });
   const [searchQuery, setSearchQuery] = useState('');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
 
@@ -308,16 +299,6 @@ export default function App() {
   }, [currentUser]);
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDarkMode]);
-
-  useEffect(() => {
     if (currentUser && notes.length > 0 && !activeNoteId) {
       setActiveNoteId(notes[0].id);
     }
@@ -325,7 +306,7 @@ export default function App() {
 
   if (sessionLoading) {
     return (
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center">
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
         <div className="animate-spin text-amber-500">
           <Clock size={32} />
         </div>
@@ -337,9 +318,9 @@ export default function App() {
   if (!currentUser) {
     if (showLandingPage) {
       return (
-        <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 font-sans selection:bg-amber-200">
+        <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans selection:bg-amber-200">
           {/* Header */}
-          <nav className="fixed top-0 w-full z-50 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl border-b border-neutral-200/50 dark:border-neutral-800/50">
+          <nav className="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-xl border-b border-neutral-200/50">
             <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="bg-amber-500 p-2 rounded-xl text-white shadow-lg shadow-amber-500/30">
@@ -348,12 +329,6 @@ export default function App() {
                 <span className="text-xl font-bold tracking-tight">Notopad</span>
               </div>
               <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => setIsDarkMode(!isDarkMode)}
-                  className="p-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
-                >
-                  {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-                </button>
                 <button 
                   onClick={() => setShowLandingPage(false)}
                   className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2.5 rounded-full font-semibold transition-all shadow-lg shadow-amber-500/20 active:scale-95"
@@ -372,11 +347,11 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 bg-gradient-to-br from-neutral-900 to-neutral-500 dark:from-white dark:to-neutral-500 bg-clip-text text-transparent">
+                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 bg-gradient-to-br from-neutral-900 to-neutral-500 bg-clip-text text-transparent">
                   Your Ideas, Simplified. <br />
                   <span className="text-amber-500">Auto-saved.</span>
                 </h1>
-                <p className="text-lg md:text-xl text-neutral-500 dark:text-neutral-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+                <p className="text-lg md:text-xl text-neutral-500 max-w-2xl mx-auto mb-12 leading-relaxed">
                   The most minimal, fastest, and efficient way to capture your thoughts. 
                   Zero friction. Just open and start typing.
                 </p>
@@ -387,7 +362,7 @@ export default function App() {
                   >
                     Start Writing Now
                   </button>
-                  <a href="#features" className="w-full sm:w-auto px-10 py-4 rounded-2xl font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all">
+                  <a href="#features" className="w-full sm:w-auto px-10 py-4 rounded-2xl font-semibold hover:bg-neutral-100 transition-all">
                     Learn More
                   </a>
                 </div>
@@ -400,8 +375,8 @@ export default function App() {
                 transition={{ delay: 0.3, duration: 0.8 }}
                 className="mt-20 relative px-4"
               >
-                <div className="max-w-5xl mx-auto bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-                  <div className="h-12 bg-neutral-50 dark:bg-neutral-800/50 flex items-center px-6 gap-2 border-b border-neutral-200 dark:border-neutral-800">
+                <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden">
+                  <div className="h-12 bg-neutral-50 flex items-center px-6 gap-2 border-b border-neutral-200">
                     <div className="flex gap-1.5">
                       <div className="w-3 h-3 rounded-full bg-red-400/50" />
                       <div className="w-3 h-3 rounded-full bg-amber-400/50" />
@@ -411,11 +386,11 @@ export default function App() {
                   </div>
                   <div className="p-8 aspect-video flex items-center justify-center">
                     <div className="text-left w-full max-w-2xl">
-                      <div className="h-4 w-48 bg-neutral-100 dark:bg-neutral-800 rounded-full mb-6" />
+                      <div className="h-4 w-48 bg-neutral-100 rounded-full mb-6" />
                       <div className="space-y-4">
-                        <div className="h-3 w-full bg-neutral-50 dark:bg-neutral-800/50 rounded-full" />
-                        <div className="h-3 w-full bg-neutral-50 dark:bg-neutral-800/50 rounded-full" />
-                        <div className="h-3 w-2/3 bg-neutral-50 dark:bg-neutral-800/50 rounded-full" />
+                        <div className="h-3 w-full bg-neutral-50 rounded-full" />
+                        <div className="h-3 w-full bg-neutral-50 rounded-full" />
+                        <div className="h-3 w-2/3 bg-neutral-50 rounded-full" />
                       </div>
                     </div>
                   </div>
@@ -427,24 +402,24 @@ export default function App() {
           </main>
 
           {/* Features */}
-          <section id="features" className="py-24 px-6 bg-white dark:bg-neutral-900/50">
+          <section id="features" className="py-24 px-6 bg-white">
             <div className="max-w-7xl mx-auto">
               <div className="grid md:grid-cols-3 gap-8">
                 {[
                   { icon: <Save size={28} />, title: "Instant Auto-save", desc: "Never lose a thought again. Every keystroke is saved immediately." },
                   { icon: <Lock size={28} />, title: "Secure & Private", desc: "Your notes belong to you. Encrypted storage right in your browser." },
-                  { icon: <Moon size={28} />, title: "Eye Comfort", desc: "A beautifully crafted dark mode for those late-night sessions." }
+                  { icon: <Clock size={28} />, title: "Minimal Experience", desc: "A beautifully crafted interface designed for focus and speed." }
                 ].map((feat, i) => (
                   <motion.div 
                     key={i}
                     whileHover={{ y: -5 }}
-                    className="p-10 rounded-3xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 transition-all"
+                    className="p-10 rounded-3xl bg-neutral-50 border border-neutral-200 transition-all"
                   >
                     <div className="bg-amber-500/10 text-amber-500 w-14 h-14 rounded-2xl flex items-center justify-center mb-6">
                       {feat.icon}
                     </div>
                     <h3 className="text-xl font-bold mb-3">{feat.title}</h3>
-                    <p className="text-neutral-500 dark:text-neutral-400 leading-relaxed">{feat.desc}</p>
+                    <p className="text-neutral-500 leading-relaxed">{feat.desc}</p>
                   </motion.div>
                 ))}
               </div>
@@ -452,7 +427,7 @@ export default function App() {
           </section>
 
           {/* Footer */}
-          <footer className="py-12 px-6 border-t border-neutral-100 dark:border-neutral-800">
+          <footer className="py-12 px-6 border-t border-neutral-100">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 opacity-60 text-sm">
               <p>© 2024 Notopad. All rights reserved.</p>
               <div className="flex items-center gap-8">
@@ -464,13 +439,12 @@ export default function App() {
           </footer>
         </div>
       );
-    }
-    return (
-      <div className={`min-h-screen flex items-center justify-center p-6 bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300 font-sans`}>
+    }    return (
+      <div className={`min-h-screen flex items-center justify-center p-6 bg-neutral-50 transition-colors duration-300 font-sans`}>
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl p-8 border border-neutral-100 dark:border-neutral-800"
+          className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 border border-neutral-100"
         >
           <button 
             onClick={() => setShowLandingPage(true)}
@@ -483,8 +457,8 @@ export default function App() {
             <div className="bg-amber-500 p-3 rounded-2xl text-white mb-4 shadow-lg shadow-amber-500/20">
               <BookOpen size={32} />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">Notopad</h1>
-            <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
+            <h1 className="text-2xl font-bold tracking-tight text-neutral-900">Notopad</h1>
+            <p className="text-neutral-500 text-sm mt-1">
               {authMode === 'login' ? 'Welcome back! Please login.' : 'Create an account to start writing.'}
             </p>
           </div>
@@ -499,7 +473,7 @@ export default function App() {
                     type="text" 
                     required
                     placeholder="Enter your name"
-                    className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm"
+                    className="w-full bg-neutral-100 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm"
                     value={authFormData.name}
                     onChange={(e) => setAuthFormData({...authFormData, name: e.target.value})}
                   />
@@ -515,7 +489,7 @@ export default function App() {
                   type="email" 
                   required
                   placeholder="Enter your email"
-                  className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm"
+                  className="w-full bg-neutral-100 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm"
                   value={authFormData.email}
                   onChange={(e) => setAuthFormData({...authFormData, email: e.target.value})}
                 />
@@ -530,7 +504,7 @@ export default function App() {
                   type="password" 
                   required
                   placeholder="Enter your password"
-                  className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm"
+                  className="w-full bg-neutral-100 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm"
                   value={authFormData.password}
                   onChange={(e) => setAuthFormData({...authFormData, password: e.target.value})}
                 />
@@ -546,7 +520,7 @@ export default function App() {
                     type="password" 
                     required
                     placeholder="Confirm your password"
-                    className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm"
+                    className="w-full bg-neutral-100 rounded-xl py-3 pl-10 pr-4 outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm"
                     value={authFormData.confirmPassword}
                     onChange={(e) => setAuthFormData({...authFormData, confirmPassword: e.target.value})}
                   />
@@ -555,7 +529,7 @@ export default function App() {
             )}
 
             {authError && (
-              <p className="text-red-500 text-xs font-medium ml-1 bg-red-50 dark:bg-red-900/10 p-2 rounded-lg">{authError}</p>
+              <p className="text-red-500 text-xs font-medium ml-1 bg-red-50 p-2 rounded-lg">{authError}</p>
             )}
 
             <button 
@@ -577,7 +551,7 @@ export default function App() {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-neutral-500 dark:text-neutral-400 font-medium">
+          <p className="mt-8 text-center text-sm text-neutral-500 font-medium">
             {authMode === 'login' ? "Don't have an account? " : "Already have an account? "}
             <button 
               onClick={() => {
@@ -596,14 +570,14 @@ export default function App() {
 
   // --- Main App View ---
   return (
-    <div className={`min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 transition-colors duration-300 font-sans`}>
+    <div className={`min-h-screen bg-neutral-50 text-neutral-900 transition-colors duration-300 font-sans`}>
       
       {/* Header */}
-      <header className="sticky top-0 z-30 w-full bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 h-16 flex items-center px-4 justify-between">
+      <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-neutral-200 h-16 flex items-center px-4 justify-between">
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsSidebarOpen(true)}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full md:hidden"
+            className="p-2 hover:bg-neutral-100 rounded-full md:hidden"
             id="menu-toggle"
           >
             <Menu size={20} />
@@ -618,21 +592,13 @@ export default function App() {
 
         <div className="flex items-center gap-2">
           {saveStatus !== 'idle' && (
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-neutral-100 dark:bg-neutral-800 rounded-full text-xs font-medium animate-pulse">
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-neutral-100 rounded-full text-xs font-medium animate-pulse">
               <Save size={12} className={saveStatus === 'saving' ? 'animate-bounce' : ''} />
               <span>{saveStatus === 'saving' ? 'Saving...' : 'Saved'}</span>
             </div>
           )}
           
-          <div className="h-8 w-[1px] bg-neutral-200 dark:bg-neutral-800 mx-2 hidden sm:block" />
-
-          <button 
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
-            title="Toggle theme"
-          >
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
+          <div className="h-8 w-[1px] bg-neutral-200 mx-2 hidden sm:block" />
 
           <button 
             onClick={createNote}
@@ -644,17 +610,17 @@ export default function App() {
           </button>
 
           <div className="relative group">
-            <button className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full">
+            <button className="p-2 hover:bg-neutral-100 rounded-full">
               <User size={20} />
             </button>
-            <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-neutral-900 rounded-xl shadow-xl border border-neutral-100 dark:border-neutral-800 p-2 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all">
-              <div className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800 mb-1">
+            <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-neutral-100 p-2 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all">
+              <div className="px-3 py-2 border-b border-neutral-100 mb-1">
                 <p className="text-xs font-bold text-neutral-400 uppercase">Signed in as</p>
                 <p className="text-sm font-semibold truncate">{currentUser.name}</p>
               </div>
               <button 
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg text-sm font-medium transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
               >
                 <LogOut size={16} />
                 Logout
@@ -681,12 +647,12 @@ export default function App() {
 
         {/* Sidebar */}
         <aside className={`
-          fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col transition-transform duration-300 md:relative md:translate-x-0
+          fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-neutral-200 flex flex-col transition-transform duration-300 md:relative md:translate-x-0
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}>
-          <div className="p-4 flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800">
+          <div className="p-4 flex items-center justify-between border-b border-neutral-200">
             <h2 className="font-semibold">My Notes</h2>
-            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded">
+            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 hover:bg-neutral-100 rounded">
               <X size={20} />
             </button>
           </div>
@@ -697,7 +663,7 @@ export default function App() {
               <input 
                 type="text" 
                 placeholder="Search notes..." 
-                className="w-full bg-neutral-100 dark:bg-neutral-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-amber-500 outline-none transition-all"
+                className="w-full bg-neutral-100 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-amber-500 outline-none transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -729,8 +695,8 @@ export default function App() {
                   className={`
                     w-full text-left p-3 rounded-xl transition-all group flex items-start justify-between cursor-pointer
                     ${activeNoteId === note.id 
-                      ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-400 ring-1 ring-amber-200 dark:ring-amber-900/50' 
-                      : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'}
+                      ? 'bg-amber-50 text-amber-900 ring-1 ring-amber-200' 
+                      : 'hover:bg-neutral-100'}
                   `}
                 >
                   <div className="flex-1 min-w-0 pr-2">
@@ -745,7 +711,7 @@ export default function App() {
                   </div>
                   <button 
                     onClick={(e) => deleteNote(note.id, e)}
-                    className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-white dark:hover:bg-neutral-700 hover:text-red-500 rounded-lg transition-all"
+                    className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-white hover:text-red-500 rounded-lg transition-all"
                     aria-label="Delete note"
                   >
                     <Trash2 size={14} />
@@ -757,7 +723,7 @@ export default function App() {
         </aside>
 
         {/* Main Editor */}
-        <main className="flex-1 h-full bg-white dark:bg-neutral-950 flex flex-col">
+        <main className="flex-1 h-full bg-white flex flex-col">
           {activeNote ? (
             <>
               {/* Mobile Back Button */}
@@ -777,12 +743,12 @@ export default function App() {
                   value={activeNote.title}
                   readOnly
                   placeholder="Note Title"
-                  className="text-2xl sm:text-4xl font-bold border-none outline-none bg-transparent placeholder:opacity-20 mb-6 text-neutral-800 dark:text-neutral-50 px-0"
+                  className="text-2xl sm:text-4xl font-bold border-none outline-none bg-transparent placeholder:opacity-20 mb-6 text-neutral-800 px-0"
                 />
                 
                 <textarea
                   placeholder="Start typing your thoughts..."
-                  className="flex-1 w-full text-base sm:text-lg resize-none border-none outline-none bg-transparent placeholder:opacity-30 leading-relaxed text-neutral-600 dark:text-neutral-300"
+                  className="flex-1 w-full text-base sm:text-lg resize-none border-none outline-none bg-transparent placeholder:opacity-30 leading-relaxed text-neutral-600"
                   value={activeNote.content}
                   onChange={(e) => updateNote(e.target.value)}
                   autoFocus
@@ -790,7 +756,7 @@ export default function App() {
               </div>
 
               {/* Status Bar */}
-              <footer className="p-3 border-t border-neutral-100 dark:border-neutral-800 text-[11px] text-neutral-400 flex justify-between px-6">
+              <footer className="p-3 border-t border-neutral-100 text-[11px] text-neutral-400 flex justify-between px-6">
                 <span>{activeNote.content.length} characters</span>
                 <span className="flex items-center gap-1">
                   Last updated: {new Date(activeNote.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -799,7 +765,7 @@ export default function App() {
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-6 opacity-30 select-none">
-              <div className="bg-neutral-100 dark:bg-neutral-800 p-8 rounded-full mb-6">
+              <div className="bg-neutral-100 p-8 rounded-full mb-6">
                 <Plus size={64} />
               </div>
               <h2 className="text-xl font-semibold mb-2">Welcome, {currentUser.name}!</h2>
