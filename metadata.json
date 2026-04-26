@@ -1,0 +1,6 @@
+{
+  "name": " Noto Notepad",
+  "description": "A modern, mobile-first notepad application with auto-save, multi-note support, and dark mode.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
