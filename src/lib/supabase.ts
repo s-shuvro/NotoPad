@@ -1,10 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, "");
+const rawUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase credentials missing. Check your environment variables.');
+// Clean the URL: remove trailing slash and ensure https:// protocol
+let supabaseUrl = rawUrl?.trim().replace(/\/$/, "");
+if (supabaseUrl && !supabaseUrl.startsWith('http')) {
+  supabaseUrl = `https://${supabaseUrl}`;
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Supabase Error: Credentials are missing! Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your environment.');
+}
+
+export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || '');

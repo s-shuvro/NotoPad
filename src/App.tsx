@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { 
   Plus, 
   Trash2, 
@@ -72,23 +72,27 @@ export default function App() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // --- Derived State ---
-  const filteredNotes = notes
-    .filter(n => 
-      n.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      n.content.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => b.updatedAt - a.updatedAt);
+  const filteredNotes = useMemo(() => {
+    return notes
+      .filter(n => 
+        n.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        n.content.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .sort((a, b) => b.updatedAt - a.updatedAt);
+  }, [notes, searchQuery]);
 
-  const activeNote = notes.find(n => n.id === activeNoteId);
+  const activeNote = useMemo(() => {
+    return notes.find(n => n.id === activeNoteId);
+  }, [notes, activeNoteId]);
 
   // --- Helpers ---
-  const generateTitle = (content: string) => {
+  const generateTitle = useCallback((content: string) => {
     const firstLine = content.split('\n')[0].trim();
     return firstLine || 'Untitled Note';
-  };
+  }, []);
 
   // --- Auth Actions ---
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleAuth = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
     setIsAuthLoading(true);
@@ -111,8 +115,6 @@ export default function App() {
 
         if (error) throw error;
         if (data.user) {
-          // In Supabase, if email confirmation is on, they might not be logged in immediately.
-          // But usually in dev it's auto-logged in or user is returned.
           if (!data.session) {
             setAuthError('Check your email for confirmation link!');
           }
@@ -129,18 +131,18 @@ export default function App() {
     } finally {
       setIsAuthLoading(false);
     }
-  };
+  }, [authMode, authFormData]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
     setCurrentUser(null);
     setNotes([]);
     setActiveNoteId(null);
     setShowLandingPage(true);
-  };
+  }, []);
 
   // --- App Actions ---
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     if (!currentUser) return;
     const { data, error } = await supabase
       .from('notes')
@@ -163,9 +165,9 @@ export default function App() {
       }));
       setNotes(formattedNotes);
     }
-  };
+  }, [currentUser]);
 
-  const createNote = async () => {
+  const createNote = useCallback(async () => {
     if (!currentUser) return;
     
     const newNoteData = {
@@ -198,9 +200,9 @@ export default function App() {
       setActiveNoteId(newNote.id);
       setIsSidebarOpen(false);
     }
-  };
+  }, [currentUser]);
 
-  const deleteNote = async (id: string, e: React.MouseEvent) => {
+  const deleteNote = useCallback(async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
     const { error } = await supabase
@@ -217,9 +219,9 @@ export default function App() {
     if (activeNoteId === id) {
       setActiveNoteId(null);
     }
-  };
+  }, [activeNoteId]);
 
-  const updateNote = (content: string) => {
+  const updateNote = useCallback((content: string) => {
     if (!activeNoteId || !currentUser) return;
 
     setSaveStatus('saving');
@@ -247,18 +249,26 @@ export default function App() {
 
       if (error) {
         console.error('Error saving note:', error);
-        setSaveStatus('idle'); // or error state
+        setSaveStatus('idle');
       } else {
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 2000);
       }
     }, DEBOUNCE_DELAY);
-  };
+  }, [activeNoteId, currentUser, generateTitle]);
 
   // --- Effects ---
   useEffect(() => {
     // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Initial session error:', error);
+        supabase.auth.signOut();
+        setCurrentUser(null);
+        setSessionLoading(false);
+        return;
+      }
+
       if (session?.user) {
         setCurrentUser({
           id: session.user.id,
@@ -271,7 +281,11 @@ export default function App() {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
+        // Handle these if needed
+      }
+
       if (session?.user) {
         setCurrentUser({
           id: session.user.id,
@@ -331,7 +345,7 @@ export default function App() {
                 <div className="bg-amber-500 p-2 rounded-xl text-white shadow-lg shadow-amber-500/30">
                   <BookOpen size={24} />
                 </div>
-                <span className="text-xl font-bold tracking-tight">Noto Notepad</span>
+                <span className="text-xl font-bold tracking-tight">Notopad</span>
               </div>
               <div className="flex items-center gap-4">
                 <button 
@@ -440,7 +454,7 @@ export default function App() {
           {/* Footer */}
           <footer className="py-12 px-6 border-t border-neutral-100 dark:border-neutral-800">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 opacity-60 text-sm">
-              <p>© 2024 Noto Notepad. All rights reserved.</p>
+              <p>© 2024 Notopad. All rights reserved.</p>
               <div className="flex items-center gap-8">
                 <a href="#" className="hover:text-amber-500">Privacy</a>
                 <a href="#" className="hover:text-amber-500">Terms</a>
@@ -469,7 +483,7 @@ export default function App() {
             <div className="bg-amber-500 p-3 rounded-2xl text-white mb-4 shadow-lg shadow-amber-500/20">
               <BookOpen size={32} />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">Noto Notepad</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">Notopad</h1>
             <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
               {authMode === 'login' ? 'Welcome back! Please login.' : 'Create an account to start writing.'}
             </p>
@@ -598,7 +612,7 @@ export default function App() {
             <div className="bg-amber-500 p-1.5 rounded-lg text-white">
               <BookOpen size={20} />
             </div>
-            <h1 className="font-bold text-lg tracking-tight hidden sm:block">Noto Notepad</h1>
+            <h1 className="font-bold text-lg tracking-tight hidden sm:block">Notopad</h1>
           </div>
         </div>
 
