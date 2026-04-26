@@ -407,7 +407,7 @@ export default function App() {
                       <div className="w-3 h-3 rounded-full bg-amber-400/50" />
                       <div className="w-3 h-3 rounded-full bg-green-400/50" />
                     </div>
-                    <div className="flex-1 text-center text-xs font-medium text-neutral-400">smart-notepad.app</div>
+                    <div className="flex-1 text-center text-xs font-medium text-neutral-400">notopad.app</div>
                   </div>
                   <div className="p-8 aspect-video flex items-center justify-center">
                     <div className="text-left w-full max-w-2xl">
