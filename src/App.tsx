@@ -105,7 +105,15 @@ export default function App() {
         });
 
         if (error) throw error;
+        
+        // Ensure a profile exists for existence checks during login
         if (data.user) {
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            email: data.user.email,
+            full_name: authFormData.name
+          });
+
           if (!data.session) {
             setAuthError('Check your email for confirmation link!');
           }
@@ -118,7 +126,40 @@ export default function App() {
         if (error) throw error;
       }
     } catch (err: any) {
-      setAuthError(err.message);
+      console.error('Auth error full object:', err);
+      let msg = err.message || 'An error occurred';
+      const errorCode = err.code || (err.status === 400 ? 'invalid_credentials' : '');
+      const lower = msg.toLowerCase();
+
+      // Map Supabase errors to distinct messages
+      if (authMode === 'login' && (lower.includes('invalid login credentials') || lower.includes('invalid credentials') || errorCode === 'invalid_credentials')) {
+        try {
+          // Check if user exists in the 'profiles' collection
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', authFormData.email)
+            .maybeSingle();
+
+          if (!profileError && !profileData) {
+            msg = 'user not found';
+          } else {
+            msg = 'incorrect password';
+          }
+        } catch (checkErr) {
+          msg = 'incorrect password'; 
+        }
+      }
+      
+      // Secondary normalization to ensure requested strings are used
+      const finalLower = msg.toLowerCase();
+      if (finalLower.includes('user not found') || finalLower.includes('no user')) {
+        msg = 'user not found';
+      } else if (finalLower.includes('invalid password') || finalLower.includes('incorrect password') || finalLower.includes('invalid login credentials')) {
+        msg = 'incorrect password';
+      }
+      
+      setAuthError(msg);
     } finally {
       setIsAuthLoading(false);
     }
@@ -261,29 +302,47 @@ export default function App() {
       }
 
       if (session?.user) {
+        const user = session.user;
         setCurrentUser({
-          id: session.user.id,
-          name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'User',
-          email: session.user.email || ''
+          id: user.id,
+          name: user.user_metadata.full_name || user.email?.split('@')[0] || 'User',
+          email: user.email || ''
         });
         setShowLandingPage(false);
+
+        // Sync profile
+        supabase.from('profiles').upsert({
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata.full_name || user.email?.split('@')[0] || 'User'
+        }).then(({ error }) => {
+          if (error) console.error('Error syncing profile:', error);
+        });
       }
       setSessionLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
-        // Handle these if needed
-      }
-
       if (session?.user) {
+        const user = session.user;
         setCurrentUser({
-          id: session.user.id,
-          name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'User',
-          email: session.user.email || ''
+          id: user.id,
+          name: user.user_metadata.full_name || user.email?.split('@')[0] || 'User',
+          email: user.email || ''
         });
         setShowLandingPage(false);
+
+        // Sync profile on login, signup or session start
+        if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
+          supabase.from('profiles').upsert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata.full_name || user.email?.split('@')[0] || 'User'
+          }).then(({ error }) => {
+            if (error) console.error('Error syncing profile on event:', error);
+          });
+        }
       } else {
         setCurrentUser(null);
       }
