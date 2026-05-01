@@ -253,17 +253,16 @@ export default function App() {
     }
   }, [activeNoteId]);
 
-  const updateNote = useCallback((content: string) => {
+  const updateNote = useCallback((updates: Partial<{title: string, content: string}>) => {
     if (!activeNoteId || !currentUser) return;
 
     setSaveStatus('saving');
-    const title = generateTitle(content);
     const updatedAt = Date.now();
 
     // Optimistic update
     setNotes(prev => prev.map(n => {
       if (n.id === activeNoteId) {
-        return { ...n, content, title, updatedAt };
+        return { ...n, ...updates, updatedAt };
       }
       return n;
     }));
@@ -273,8 +272,7 @@ export default function App() {
       const { error } = await supabase
         .from('notes')
         .update({ 
-          content, 
-          title, 
+          ...updates,
           updated_at: new Date(updatedAt).toISOString() 
         })
         .eq('id', activeNoteId);
@@ -287,7 +285,7 @@ export default function App() {
         setTimeout(() => setSaveStatus('idle'), 2000);
       }
     }, DEBOUNCE_DELAY);
-  }, [activeNoteId, currentUser, generateTitle]);
+  }, [activeNoteId, currentUser]);
 
   // --- Effects ---
   useEffect(() => {
@@ -634,15 +632,24 @@ export default function App() {
       {/* Header */}
       <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-neutral-200 h-16 flex items-center px-4 justify-between">
         <div className="flex items-center gap-3">
+          {/* Desktop Menu - Hidden on mobile */}
           <button 
             onClick={() => setIsSidebarOpen(true)}
-            className="p-2 hover:bg-neutral-100 rounded-full md:hidden"
+            className="p-2 hover:bg-neutral-100 rounded-full hidden md:flex"
             id="menu-toggle"
           >
             <Menu size={20} />
           </button>
           <div className="flex items-center gap-2">
-            <div className="bg-amber-500 p-1.5 rounded-lg text-white">
+            {activeNoteId && (
+              <button 
+                onClick={() => setActiveNoteId(null)}
+                className="md:hidden p-2 -ml-2 text-neutral-500"
+              >
+                <ChevronLeft size={24} />
+              </button>
+            )}
+            <div className={`bg-amber-500 p-1.5 rounded-lg text-white ${activeNoteId ? 'hidden md:block' : 'block'}`}>
               <BookOpen size={20} />
             </div>
             <h1 className="font-bold text-lg tracking-tight hidden sm:block">Notopad</h1>
@@ -661,7 +668,7 @@ export default function App() {
 
           <button 
             onClick={createNote}
-            className="bg-amber-500 hover:bg-amber-600 text-white p-2 sm:px-4 sm:py-2 rounded-full sm:rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-amber-500/20"
+            className="hidden md:flex bg-amber-500 hover:bg-amber-600 text-white p-2 sm:px-4 sm:py-2 rounded-full sm:rounded-lg items-center gap-2 transition-all shadow-lg shadow-amber-500/20"
             id="new-note-btn"
           >
             <Plus size={20} />
@@ -691,7 +698,7 @@ export default function App() {
 
       <div className="flex h-[calc(100vh-64px)] overflow-hidden">
         
-        {/* Sidebar Overlay (Mobile) */}
+        {/* Sidebar Overlay (Mobile) - Only if really needed for some specific mobile menu, but we're shifting to master-detail */}
         <AnimatePresence>
           {isSidebarOpen && (
             <motion.div 
@@ -699,21 +706,23 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsSidebarOpen(false)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden md:hidden"
             />
           )}
         </AnimatePresence>
 
         {/* Sidebar */}
         <aside className={`
-          fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-neutral-200 flex flex-col transition-transform duration-300 md:relative md:translate-x-0
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          ${activeNoteId ? 'hidden md:flex' : 'flex w-full md:w-72'}
+          fixed inset-y-0 left-0 z-50 bg-white border-r border-neutral-200 flex-col transition-all duration-300 md:relative md:translate-x-0
         `}>
           <div className="p-4 flex items-center justify-between border-b border-neutral-200">
-            <h2 className="font-semibold">My Notes</h2>
-            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 hover:bg-neutral-100 rounded">
-              <X size={20} />
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="bg-amber-500 p-1.5 rounded-lg text-white md:hidden">
+                <BookOpen size={18} />
+              </div>
+              <h2 className="font-semibold">My Notes</h2>
+            </div>
           </div>
 
           <div className="p-3">
@@ -782,25 +791,16 @@ export default function App() {
         </aside>
 
         {/* Main Editor */}
-        <main className="flex-1 h-full bg-white flex flex-col">
+        <main className={`flex-1 h-full bg-white flex-col ${!activeNoteId ? 'hidden md:flex' : 'flex'}`}>
           {activeNote ? (
             <>
-              {/* Mobile Back Button */}
-              <div className="md:hidden p-2">
-                <button 
-                  onClick={() => setIsSidebarOpen(true)}
-                  className="flex items-center gap-1 text-sm font-medium text-amber-500"
-                >
-                  <ChevronLeft size={18} />
-                  Notes List
-                </button>
-              </div>
+              {/* Mobile Editor Header - Hidden since delete is removed for mobile as requested */}
               
               <div className="flex-1 flex flex-col p-4 sm:p-8 max-w-4xl mx-auto w-full">
                 <input 
                   type="text" 
                   value={activeNote.title}
-                  readOnly
+                  onChange={(e) => updateNote({ title: e.target.value })}
                   placeholder="Note Title"
                   className="text-2xl sm:text-4xl font-bold border-none outline-none bg-transparent placeholder:opacity-20 mb-6 text-neutral-800 px-0"
                 />
@@ -809,7 +809,7 @@ export default function App() {
                   placeholder="Start typing your thoughts..."
                   className="flex-1 w-full text-base sm:text-lg resize-none border-none outline-none bg-transparent placeholder:opacity-30 leading-relaxed text-neutral-600"
                   value={activeNote.content}
-                  onChange={(e) => updateNote(e.target.value)}
+                  onChange={(e) => updateNote({ content: e.target.value })}
                   autoFocus
                 />
               </div>
@@ -823,7 +823,7 @@ export default function App() {
               </footer>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 opacity-30 select-none">
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 opacity-30 select-none hidden md:flex">
               <div className="bg-neutral-100 p-8 rounded-full mb-6">
                 <Plus size={64} />
               </div>
@@ -838,6 +838,17 @@ export default function App() {
             </div>
           )}
         </main>
+
+        {/* Mobile Floating Action Button (FAB) */}
+        {!activeNoteId && (
+          <button 
+            onClick={createNote}
+            className="md:hidden fixed bottom-8 right-8 w-16 h-16 bg-amber-500 text-white rounded-full flex items-center justify-center shadow-2xl shadow-amber-500/40 active:scale-95 transition-all z-50 border-4 border-white"
+            aria-label="Create new note"
+          >
+            <Plus size={32} strokeWidth={3} />
+          </button>
+        )}
       </div>
     </div>
   );
