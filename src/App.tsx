@@ -356,7 +356,8 @@ export default function App() {
   }, [currentUser]);
 
   useEffect(() => {
-    if (currentUser && notes.length > 0 && !activeNoteId) {
+    // Only auto-select note on desktop screens
+    if (currentUser && notes.length > 0 && !activeNoteId && window.innerWidth >= 768) {
       setActiveNoteId(notes[0].id);
     }
   }, [currentUser, notes.length]);
