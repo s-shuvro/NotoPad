@@ -649,7 +649,7 @@ export default function App() {
                 <ChevronLeft size={24} />
               </button>
             )}
-            <div className={`bg-amber-500 p-1.5 rounded-lg text-white ${activeNoteId ? 'hidden md:block' : 'block'}`}>
+            <div className={`bg-amber-500 p-1.5 rounded-lg text-white hidden`}>
               <BookOpen size={20} />
             </div>
             <h1 className="font-bold text-lg tracking-tight hidden sm:block">Notopad</h1>
@@ -674,25 +674,6 @@ export default function App() {
             <Plus size={20} />
             <span className="hidden sm:inline font-medium">New Note</span>
           </button>
-
-          <div className="relative group">
-            <button className="p-2 hover:bg-neutral-100 rounded-full">
-              <User size={20} />
-            </button>
-            <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-neutral-100 p-2 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all">
-              <div className="px-3 py-2 border-b border-neutral-100 mb-1">
-                <p className="text-xs font-bold text-neutral-400 uppercase">Signed in as</p>
-                <p className="text-sm font-semibold truncate">{currentUser.name}</p>
-              </div>
-              <button 
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
-              >
-                <LogOut size={16} />
-                Logout
-              </button>
-            </div>
-          </div>
         </div>
       </header>
 
@@ -787,6 +768,20 @@ export default function App() {
                 </div>
               ))
             )}
+          </div>
+
+          <div className="p-3 border-t border-neutral-100">
+            <div className="px-3 py-2 mb-1">
+              <p className="text-[10px] font-bold text-neutral-400 uppercase">Signed in as</p>
+              <p className="text-xs font-semibold truncate">{currentUser.name}</p>
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+            >
+              <LogOut size={16} />
+              Logout
+            </button>
           </div>
         </aside>
 
