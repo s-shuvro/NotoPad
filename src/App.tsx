@@ -705,6 +705,11 @@ export default function App() {
               </div>
               <h2 className="font-semibold">My Notes</h2>
             </div>
+            {/* Mobile Profile Icon */}
+            <div className="md:hidden flex items-center gap-2 px-2 py-1 bg-neutral-50 rounded-lg border border-neutral-100">
+              <User size={16} className="text-neutral-500" />
+              <span className="text-[10px] font-bold text-neutral-400 uppercase truncate max-w-[60px]">{currentUser.name}</span>
+            </div>
           </div>
 
           <div className="p-3">
