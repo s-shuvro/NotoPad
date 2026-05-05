@@ -153,7 +153,7 @@ export default function App() {
       const lower = msg.toLowerCase();
 
       // Map Supabase errors to distinct messages
-      if (authMode === 'login' && (lower.includes('invalid login credentials') || lower.includes('invalid credentials') || errorCode === 'invalid_credentials')) {
+      if (authMode === 'login' && (lower.includes('invalid login credentials') || lower.includes('invalid credentials') || errorCode === 'invalid_credentials' || err.status === 400)) {
         try {
           // Check if user exists in the 'profiles' collection
           const { data: profileData, error: profileError } = await supabase
@@ -170,6 +170,8 @@ export default function App() {
         } catch (checkErr) {
           msg = 'incorrect password'; 
         }
+      } else if (authMode === 'signup' && lower.includes('user already registered')) {
+        msg = 'User already registered';
       }
       
       // Secondary normalization to ensure requested strings are used
@@ -178,6 +180,11 @@ export default function App() {
         msg = 'user not found';
       } else if (finalLower.includes('invalid password') || finalLower.includes('incorrect password') || finalLower.includes('invalid login credentials')) {
         msg = 'incorrect password';
+      } else if (finalLower.includes('user already registered')) {
+        msg = 'User already registered';
+      } else if (finalLower.includes('refresh_token_not_found') || finalLower.includes('refresh token')) {
+        msg = 'Session expired. Please login again.';
+        handleLogout();
       }
       
       setAuthError(msg);
@@ -472,8 +479,14 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.error('Initial session error:', error);
-        supabase.auth.signOut();
-        setCurrentUser(null);
+        // If refresh token is invalid or not found, clear strictly
+        if (error.message.toLowerCase().includes('refresh token') || error.status === 400) {
+          supabase.auth.signOut().then(() => {
+            setCurrentUser(null);
+            setSessionLoading(false);
+          });
+          return;
+        }
         setSessionLoading(false);
         return;
       }
